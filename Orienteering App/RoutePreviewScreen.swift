@@ -35,7 +35,7 @@ struct RoutePreviewScreen: View {
 
                     // Draggable checkpoint annotations
                     ForEach(Array(route.checkpoints.enumerated()), id: \.element.id) { i, checkpoint in
-                        Annotation("\(i + 1)", coordinate: checkpoint.coordinate) {
+                        Annotation("", coordinate: checkpoint.coordinate) {
                             draggableMarker(index: i, proxy: proxy)
                         }
                     }
