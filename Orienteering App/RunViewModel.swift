@@ -7,6 +7,7 @@
 
 import Combine
 import CoreLocation
+import UIKit
 
 final class RunViewModel: ObservableObject {
     @Published var route: Route
@@ -52,6 +53,7 @@ final class RunViewModel: ObservableObject {
                 longitude: route.start.longitude
             )
             if location.distance(from: startLocation) <= proximityRadius {
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
                 waitingForStart = false
                 startTime = Date()
             }
@@ -68,6 +70,7 @@ final class RunViewModel: ObservableObject {
                 longitude: checkpoint.coordinate.longitude
             )
             if location.distance(from: target) <= proximityRadius {
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 route.checkpoints[currentCheckpointIndex].visited = true
                 currentCheckpointIndex += 1
             }
@@ -83,6 +86,7 @@ final class RunViewModel: ObservableObject {
             longitude: route.start.longitude
         )
         if location.distance(from: startLocation) <= proximityRadius {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
             finishTime = Date()
             finished = true
         }
