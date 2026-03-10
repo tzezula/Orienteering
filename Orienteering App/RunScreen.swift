@@ -7,7 +7,6 @@
 
 import Combine
 import SwiftUI
-import MapKit
 
 struct RunScreen: View {
     @StateObject private var locationManager = LocationManager()
