@@ -64,6 +64,9 @@ struct MLNMapViewWrapper: UIViewRepresentable {
     // ── Coordinate conversion ────────────────────────────────────────────────
     var proxy: MLNMapProxy? = nil
 
+    // ── Tracked trail (RunScreen) ────────────────────────────────────────────
+    var trackedPath: [CLLocationCoordinate2D] = []
+
     // ── Callbacks (RoutePreviewScreen checkpoint drag) ───────────────────────
     var onCheckpointDragged: ((Int, CLLocationCoordinate2D) -> Void)? = nil
     var onCheckpointDragEnded: (() -> Void)? = nil
@@ -125,6 +128,7 @@ struct MLNMapViewWrapper: UIViewRepresentable {
         guard mv.style != nil else { return }
         c.updateAnnotations(mv)
         c.updatePolyline(mv)
+        c.updateTrackedPath(mv)
     }
 
     private func applyGestures(_ mv: MLNMapView) {
@@ -152,8 +156,10 @@ extension MLNMapViewWrapper {
         var checkpointPanGesture: UIPanGestureRecognizer?
         var draggingIndex: Int?
 
-        private let sourceID = "route-source"
-        private let layerID  = "route-layer"
+        private let sourceID      = "route-source"
+        private let layerID       = "route-layer"
+        private let trailSourceID = "trail-source"
+        private let trailLayerID  = "trail-layer"
 
         init(_ wrapper: MLNMapViewWrapper) { self.wrapper = wrapper }
 
@@ -161,8 +167,10 @@ extension MLNMapViewWrapper {
 
         func mapView(_ mv: MLNMapView, didFinishLoading style: MLNStyle) {
             addPolylineLayer(style)
+            addTrailLayer(style)
             updateAnnotations(mv)
             updatePolyline(mv)
+            updateTrackedPath(mv)
             if !initialFitDone, let coords = wrapper.initialCoordinatesToFit, !coords.isEmpty {
                 initialFitDone = true
                 fitCamera(to: coords, in: mv)
@@ -244,6 +252,28 @@ extension MLNMapViewWrapper {
             var coords = ([wrapper.startCoordinate].compactMap { $0 })
                 + wrapper.checkpoints.map(\.coordinate)
                 + ([wrapper.startCoordinate].compactMap { $0 })
+            src.shape = coords.count >= 2
+                ? MLNPolyline(coordinates: &coords, count: UInt(coords.count))
+                : nil
+        }
+
+        // MARK: - Tracked trail
+
+        private func addTrailLayer(_ style: MLNStyle) {
+            guard style.source(withIdentifier: trailSourceID) == nil else { return }
+            let src = MLNShapeSource(identifier: trailSourceID, shape: nil, options: nil)
+            style.addSource(src)
+            let layer = MLNLineStyleLayer(identifier: trailLayerID, source: src)
+            layer.lineColor = NSExpression(forConstantValue: UIColor.systemOrange)
+            layer.lineWidth = NSExpression(forConstantValue: 4)
+            layer.lineCap   = NSExpression(forConstantValue: "round")
+            layer.lineJoin  = NSExpression(forConstantValue: "round")
+            style.addLayer(layer)
+        }
+
+        func updateTrackedPath(_ mv: MLNMapView) {
+            guard let src = mv.style?.source(withIdentifier: trailSourceID) as? MLNShapeSource else { return }
+            var coords = wrapper.trackedPath
             src.shape = coords.count >= 2
                 ? MLNPolyline(coordinates: &coords, count: UInt(coords.count))
                 : nil

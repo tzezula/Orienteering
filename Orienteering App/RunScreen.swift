@@ -26,7 +26,8 @@ struct RunScreen: View {
             RouteMapView(
                 route: vm.route,
                 highlightIndex: vm.finished ? nil : vm.currentCheckpointIndex,
-                followsUser: true
+                followsUser: true,
+                trackedPath: vm.trackedPath
             )
             .frame(maxHeight: .infinity)
 

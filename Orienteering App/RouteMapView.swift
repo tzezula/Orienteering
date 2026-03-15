@@ -16,6 +16,8 @@ struct RouteMapView: View {
     var highlightIndex: Int? = nil
     /// When true the camera starts on the user's position and follows them.
     var followsUser: Bool = false
+    /// Recorded trail coordinates drawn on the map during a run.
+    var trackedPath: [CLLocationCoordinate2D] = []
 
     var body: some View {
         MLNMapViewWrapper(
@@ -24,7 +26,8 @@ struct RouteMapView: View {
             showsUserLocation: true,
             startCoordinate: route.start,
             checkpoints: route.checkpoints,
-            highlightIndex: highlightIndex
+            highlightIndex: highlightIndex,
+            trackedPath: trackedPath
         )
     }
 

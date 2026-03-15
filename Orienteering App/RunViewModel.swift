@@ -16,12 +16,21 @@ final class RunViewModel: ObservableObject {
     @Published var finished = false
     @Published var waitingForStart = false
     @Published private(set) var currentLocation: CLLocation?
+    @Published private(set) var trackedPath: [CLLocationCoordinate2D] = []
 
     private var finishTime: Date?
     private let proximityRadius: Double = 10  // metres
+    private let trackingInterval: TimeInterval = 30
+    private let trackingMinDistance: Double = 5  // metres
+    private var lastTrackedCoord: CLLocationCoordinate2D?
+    private var trackingTimer: Timer?
 
     init(route: Route) {
         self.route = route
+    }
+
+    deinit {
+        trackingTimer?.invalidate()
     }
 
     func startRun() {
@@ -56,6 +65,12 @@ final class RunViewModel: ObservableObject {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 waitingForStart = false
                 startTime = Date()
+                // Seed the tracked path with the start coordinate.
+                trackedPath = [route.start]
+                lastTrackedCoord = route.start
+                trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingInterval, repeats: true) { [weak self] _ in
+                    self?.sampleTrackedPosition()
+                }
             }
             return
         }
@@ -89,6 +104,17 @@ final class RunViewModel: ObservableObject {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             finishTime = Date()
             finished = true
+            trackingTimer?.invalidate()
+            trackingTimer = nil
+        }
+    }
+
+    private func sampleTrackedPosition() {
+        guard let current = currentLocation, let last = lastTrackedCoord else { return }
+        let lastCL = CLLocation(latitude: last.latitude, longitude: last.longitude)
+        if current.distance(from: lastCL) >= trackingMinDistance {
+            lastTrackedCoord = current.coordinate
+            trackedPath.append(current.coordinate)
         }
     }
 
