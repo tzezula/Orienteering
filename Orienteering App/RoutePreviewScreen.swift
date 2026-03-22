@@ -57,6 +57,7 @@ struct RoutePreviewScreen: View {
         }
         .navigationTitle("Route Preview")
         .navigationBarTitleDisplayMode(.inline)
+        .background(PopGestureDisabler())
     }
 
     // MARK: - Helpers
@@ -78,5 +79,28 @@ struct RoutePreviewScreen: View {
     private func dist(_ a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D) -> Double {
         CLLocation(latitude: a.latitude, longitude: a.longitude)
             .distance(from: CLLocation(latitude: b.latitude, longitude: b.longitude))
+    }
+}
+
+// MARK: - Pop-gesture disabler
+
+/// Invisible UIViewControllerRepresentable that disables the navigation
+/// controller's interactive-pop gesture while this screen is on screen,
+/// preventing swipe-back from interfering with checkpoint dragging.
+private struct PopGestureDisabler: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> UIViewController {
+        UIViewController()
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        DispatchQueue.main.async {
+            uiViewController.navigationController?
+                .interactivePopGestureRecognizer?.isEnabled = false
+        }
+    }
+
+    static func dismantleUIViewController(_ uiViewController: UIViewController, coordinator: ()) {
+        uiViewController.navigationController?
+            .interactivePopGestureRecognizer?.isEnabled = true
     }
 }
