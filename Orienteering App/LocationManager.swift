@@ -26,11 +26,14 @@ final class LocationManager: NSObject, ObservableObject {
     }
 
     func startTracking() {
+        manager.allowsBackgroundLocationUpdates = true
+        manager.pausesLocationUpdatesAutomatically = false
         manager.startUpdatingLocation()
     }
 
     func stopTracking() {
         manager.stopUpdatingLocation()
+        manager.allowsBackgroundLocationUpdates = false
     }
 }
 

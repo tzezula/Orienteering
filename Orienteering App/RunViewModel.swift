@@ -5,7 +5,6 @@
 //  Created by Tomas Zezula on 19.12.2025.
 //
 
-import Combine
 import CoreLocation
 import UIKit
 
@@ -20,17 +19,11 @@ final class RunViewModel: ObservableObject {
 
     private var finishTime: Date?
     private let proximityRadius: Double = 10  // metres
-    private let trackingInterval: TimeInterval = 30
     private let trackingMinDistance: Double = 5  // metres
     private var lastTrackedCoord: CLLocationCoordinate2D?
-    private var trackingTimer: Timer?
 
     init(route: Route) {
         self.route = route
-    }
-
-    deinit {
-        trackingTimer?.invalidate()
     }
 
     func startRun() {
@@ -68,9 +61,6 @@ final class RunViewModel: ObservableObject {
                 // Seed the tracked path with the start coordinate.
                 trackedPath = [route.start]
                 lastTrackedCoord = route.start
-                trackingTimer = Timer.scheduledTimer(withTimeInterval: trackingInterval, repeats: true) { [weak self] _ in
-                    self?.sampleTrackedPosition()
-                }
             }
             return
         }
@@ -93,6 +83,7 @@ final class RunViewModel: ObservableObject {
             // All checkpoints done — wait for return to start
             checkFinish(location)
         }
+        sampleTrackedPosition(location)
     }
 
     private func checkFinish(_ location: CLLocation) {
@@ -104,17 +95,15 @@ final class RunViewModel: ObservableObject {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             finishTime = Date()
             finished = true
-            trackingTimer?.invalidate()
-            trackingTimer = nil
         }
     }
 
-    private func sampleTrackedPosition() {
-        guard let current = currentLocation, let last = lastTrackedCoord else { return }
+    private func sampleTrackedPosition(_ location: CLLocation) {
+        guard let last = lastTrackedCoord else { return }
         let lastCL = CLLocation(latitude: last.latitude, longitude: last.longitude)
-        if current.distance(from: lastCL) >= trackingMinDistance {
-            lastTrackedCoord = current.coordinate
-            trackedPath.append(current.coordinate)
+        if location.distance(from: lastCL) >= trackingMinDistance {
+            lastTrackedCoord = location.coordinate
+            trackedPath.append(location.coordinate)
         }
     }
 
