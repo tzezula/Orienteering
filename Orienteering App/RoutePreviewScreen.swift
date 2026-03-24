@@ -84,34 +84,25 @@ struct RoutePreviewScreen: View {
 
 // MARK: - Pop-gesture disabler
 
-/// Invisible UIViewRepresentable that disables the navigation controller's
-/// interactive-pop gesture while this screen is on screen, preventing
-/// swipe-back from interfering with checkpoint dragging.
-///
-/// Uses `didMoveToWindow` on a real UIView so the navigation controller is
-/// guaranteed to be present in the responder chain.
-private struct PopGestureDisabler: UIViewRepresentable {
-    func makeUIView(context: Context) -> PopGestureDisablerView {
-        PopGestureDisablerView()
+/// Invisible UIViewControllerRepresentable that disables the navigation
+/// controller's interactive-pop gesture while this screen is on screen,
+/// preventing swipe-back from interfering with checkpoint dragging.
+private struct PopGestureDisabler: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> DisablerViewController {
+        DisablerViewController()
     }
 
-    func updateUIView(_ uiView: PopGestureDisablerView, context: Context) {}
-}
+    func updateUIViewController(_ uiViewController: DisablerViewController, context: Context) {}
 
-private final class PopGestureDisablerView: UIView {
-    override func didMoveToWindow() {
-        super.didMoveToWindow()
-        setGesture(enabled: window == nil)
-    }
+    final class DisablerViewController: UIViewController {
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            navigationController?.interactivePopGestureRecognizer?.isEnabled = false
+        }
 
-    private func setGesture(enabled: Bool) {
-        var responder: UIResponder? = self
-        while let r = responder {
-            if let nc = r as? UINavigationController {
-                nc.interactivePopGestureRecognizer?.isEnabled = enabled
-                return
-            }
-            responder = r.next
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            navigationController?.interactivePopGestureRecognizer?.isEnabled = true
         }
     }
 }
