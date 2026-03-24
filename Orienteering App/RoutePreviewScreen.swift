@@ -88,19 +88,21 @@ struct RoutePreviewScreen: View {
 /// controller's interactive-pop gesture while this screen is on screen,
 /// preventing swipe-back from interfering with checkpoint dragging.
 private struct PopGestureDisabler: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
-        UIViewController()
+    func makeUIViewController(context: Context) -> DisablerViewController {
+        DisablerViewController()
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        DispatchQueue.main.async {
-            uiViewController.navigationController?
-                .interactivePopGestureRecognizer?.isEnabled = false
+    func updateUIViewController(_ uiViewController: DisablerViewController, context: Context) {}
+
+    final class DisablerViewController: UIViewController {
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            navigationController?.interactivePopGestureRecognizer?.isEnabled = false
         }
-    }
 
-    static func dismantleUIViewController(_ uiViewController: UIViewController, coordinator: ()) {
-        uiViewController.navigationController?
-            .interactivePopGestureRecognizer?.isEnabled = true
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+        }
     }
 }
